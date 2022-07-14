@@ -126,13 +126,13 @@ namespace GoogleAds_Metrics
         }
 
         public static (KeywordPlanGeoTarget geotarget, GoogleAdsException exception) New_KeywordPlanGeoTarget(
-            long geoId,
+            string geoId,
             bool debug = false)
         {
             if (debug) Debugger.Launch();
             return (new KeywordPlanGeoTarget()
             {
-                GeoTargetConstant = ResourceNames.GeoTargetConstant(geoId) /* USA */
+                GeoTargetConstant = ResourceNames.GeoTargetConstant(long.Parse(geoId)) /* USA */
             }, null);
         }
 
