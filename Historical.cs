@@ -30,13 +30,12 @@ namespace GoogleAds_Metrics
 
         public static (Customer customer, GoogleAdsException exception) GetAccountInformation(
             GoogleAdsClient client,
-            long customerId,
+            string customerId,
             bool debug = false)
         {
             if (debug) Debugger.Launch();
             // Get the GoogleAdsService.
-            GoogleAdsServiceClient googleAdsService = client.GetService(
-                Services.V11.GoogleAdsService);
+            GoogleAdsServiceClient googleAdsService = client.GetService(Services.V11.GoogleAdsService);
 
             // Construct a query to retrieve the customer.
             // Add a limit of 1 row to clarify that selecting from the customer resource
@@ -49,7 +48,7 @@ namespace GoogleAds_Metrics
             // Executes the query and gets the Customer object from the single row of the response.
             SearchGoogleAdsRequest request = new SearchGoogleAdsRequest()
             {
-                CustomerId = customerId.ToString(),
+                CustomerId = customerId,
                 Query = query
             };
 
@@ -69,8 +68,8 @@ namespace GoogleAds_Metrics
 
         public static (string plan, GoogleAdsException exception) CreateKeywordPlan(
             GoogleAdsClient client,
-            long customerId,
-            KeywordPlanForecastInterval keywordPlanForecastInterval,
+            string customerId,
+            string keywordPlanForecastInterval,
             bool debug = false)
         {
             if (debug) Debugger.Launch();
@@ -84,7 +83,7 @@ namespace GoogleAds_Metrics
                 Name = $"Keyword plan GAM_{DateTime.UtcNow.ToString($"yyyy'-'MMM'-'dd' 'HH'-'mm'-'ss'-'ffffff")}",
                 ForecastPeriod = new KeywordPlanForecastPeriod()
                 {
-                    DateInterval = keywordPlanForecastInterval
+                    DateInterval = (KeywordPlanForecastInterval)Enum.Parse(typeof(KeywordPlanForecastInterval), keywordPlanForecastInterval),
                 }
             };
 
@@ -98,7 +97,7 @@ namespace GoogleAds_Metrics
             try
             {
                 response = serviceClient.MutateKeywordPlans(
-                   customerId.ToString(), new KeywordPlanOperation[] { operation });
+                   customerId, new KeywordPlanOperation[] { operation });
             }
             catch (GoogleAdsException e)
             {
@@ -109,10 +108,10 @@ namespace GoogleAds_Metrics
             return (planResource, null);
         }
 
-        public static (KeywordPlanCampaign campaign, GoogleAdsException exception) CreateNewKeywordPlanCampaign(
+        public static (KeywordPlanCampaign campaign, GoogleAdsException exception) New_KeywordPlanCampaign(
             string name,
-            long cpcBidMicros,
-            KeywordPlanNetwork keywordPlanNetwork,
+            string cpcBidMicros,
+            string keywordPlanNetwork,
             string keywordPlan,
             bool debug = false)
         {
@@ -120,13 +119,13 @@ namespace GoogleAds_Metrics
             return (new KeywordPlanCampaign()
             {
                 Name = name,
-                CpcBidMicros = cpcBidMicros,
-                KeywordPlanNetwork = keywordPlanNetwork,
+                CpcBidMicros = long.Parse(cpcBidMicros),
+                KeywordPlanNetwork = (KeywordPlanNetwork)Enum.Parse(typeof(KeywordPlanNetwork), keywordPlanNetwork),
                 KeywordPlan = keywordPlan
             }, null);
         }
 
-        public static (KeywordPlanGeoTarget geotarget, GoogleAdsException exception) CreateNewKeywordPlanGeoTarget(
+        public static (KeywordPlanGeoTarget geotarget, GoogleAdsException exception) New_KeywordPlanGeoTarget(
             long geoId,
             bool debug = false)
         {
@@ -139,10 +138,10 @@ namespace GoogleAds_Metrics
 
         public static (string CampaignPlan, GoogleAdsException exception) CreateKeywordPlanCampaign(
             GoogleAdsClient client,
-            long customerId,
+            string customerId,
             KeywordPlanCampaign campaign,
             KeywordPlanGeoTarget keywordPlanGeoTarget,
-            long langId,
+            string langId,
             bool debug = false)
         {
             if (debug) Debugger.Launch();
@@ -156,7 +155,7 @@ namespace GoogleAds_Metrics
 
             // See https://developers.google.com/google-ads/api/reference/data/codes-formats#languages
             // for the list of language criteria IDs.
-            campaign.LanguageConstants.Add(ResourceNames.LanguageConstant(langId)); /* English */
+            campaign.LanguageConstants.Add(ResourceNames.LanguageConstant(long.Parse(langId)));
 
             KeywordPlanCampaignOperation operation = new KeywordPlanCampaignOperation()
             {
@@ -165,19 +164,19 @@ namespace GoogleAds_Metrics
 
             // Add the campaign.
             MutateKeywordPlanCampaignsResponse response =
-                serviceClient.MutateKeywordPlanCampaigns(customerId.ToString(),
+                serviceClient.MutateKeywordPlanCampaigns(customerId,
                     new KeywordPlanCampaignOperation[] { operation });
 
             // Display the result.
             String planCampaignResource = response.Results[0].ResourceName;
-            Console.WriteLine($"Created campaign for keyword plan: {planCampaignResource}.");
+            //Console.WriteLine($"Created campaign for keyword plan: {planCampaignResource}.");
             return (planCampaignResource, null);
         }
 
-        public static (KeywordPlanAdGroup adGroup, GoogleAdsException exception) CreateNewKeywordPlanAdGroup(
+        public static (KeywordPlanAdGroup adGroup, GoogleAdsException exception) New_KeywordPlanAdGroup(
             string campaignResource,
             string name,
-            long cpcBidMicros,
+            string cpcBidMicros,
             bool debug = false)
         {
             if (debug) Debugger.Launch();
@@ -185,13 +184,13 @@ namespace GoogleAds_Metrics
             {
                 KeywordPlanCampaign = campaignResource,
                 Name = name,
-                CpcBidMicros = cpcBidMicros
+                CpcBidMicros = long.Parse(cpcBidMicros)
             }, null);
         }
 
         public static (string planAdGroup, GoogleAdsException exception) CreateKeywordPlanAdGroup(
             GoogleAdsClient client,
-            long customerId,
+            string customerId,
             KeywordPlanAdGroup keywordPlanAdGroup,
             bool debug = false)
         {
@@ -211,17 +210,17 @@ namespace GoogleAds_Metrics
             // Add the ad group.
             MutateKeywordPlanAdGroupsResponse response =
                 serviceClient.MutateKeywordPlanAdGroups(
-                    customerId.ToString(), new KeywordPlanAdGroupOperation[] { operation });
+                    customerId, new KeywordPlanAdGroupOperation[] { operation });
 
             // Display the result.
             String planAdGroupResource = response.Results[0].ResourceName;
-            Console.WriteLine($"Created ad group for keyword plan: {planAdGroupResource}.");
+            //Console.WriteLine($"Created ad group for keyword plan: {planAdGroupResource}.");
             return (planAdGroupResource, null);
         }
 
-        public static (KeywordPlanAdGroupKeyword adGroupKeyword, GoogleAdsException exception) CreateNewKeywordPlanAdGroupKeyword(string plan,
-            long cpcBigMicros,
-            KeywordMatchType keywordMatchType,
+        public static (KeywordPlanAdGroupKeyword adGroupKeyword, GoogleAdsException exception) New_KeywordPlanAdGroupKeyword(string plan,
+            string cpcBigMicros,
+            string keywordMatchType,
             string text,
             bool debug = false)
         {
@@ -229,15 +228,16 @@ namespace GoogleAds_Metrics
             return (new KeywordPlanAdGroupKeyword()
             {
                 KeywordPlanAdGroup = plan,
-                CpcBidMicros = cpcBigMicros,
-                MatchType = keywordMatchType,
+                CpcBidMicros = long.Parse(cpcBigMicros),
+                MatchType = (KeywordMatchType)Enum.Parse(typeof(KeywordMatchType), keywordMatchType),
+                // keywordMatchType,
                 Text = text
             }, null);
         }
 
-        public static (KeywordPlanCampaignKeyword keywordPlanCampaignKeyword, GoogleAdsException exception) CreateNewKeywordPlanCampignKeyword(
+        public static (KeywordPlanCampaignKeyword keywordPlanCampaignKeyword, GoogleAdsException exception) New_KeywordPlanCampaignKeyword(
             string planCampaignResource,
-            KeywordMatchType keywordMatchType,
+            string keywordMatchType,
             string text,
             bool debug = false)
         {
@@ -245,7 +245,7 @@ namespace GoogleAds_Metrics
             return (new KeywordPlanCampaignKeyword()
             {
                 KeywordPlanCampaign = planCampaignResource,
-                MatchType = keywordMatchType,
+                MatchType = (KeywordMatchType)Enum.Parse(typeof(KeywordMatchType), keywordMatchType),
                 Text = text,
                 Negative = true
             }, null);
@@ -253,7 +253,7 @@ namespace GoogleAds_Metrics
 
         public static (MutateKeywordPlanCampaignKeywordResult resultArray, GoogleAdsException exception) CreateKeywordPlanCampaignNegativeKeywords(
             GoogleAdsClient client,
-            long customerId,
+            string customerId,
             KeywordPlanCampaignKeyword negativeKeyword,
             bool debug = false)
         {
@@ -272,20 +272,20 @@ namespace GoogleAds_Metrics
 
             // Add the campaign negative keyword.
             MutateKeywordPlanCampaignKeywordsResponse response =
-                service.MutateKeywordPlanCampaignKeywords(customerId.ToString(),
+                service.MutateKeywordPlanCampaignKeywords(customerId,
                     new KeywordPlanCampaignKeywordOperation[] { operation });
 
             // Display the result.
             MutateKeywordPlanCampaignKeywordResult result = response.Results[0];
-            Console.WriteLine("Created campaign negative keyword for keyword plan: " +
-                $"{result.ResourceName}.");
+            //Console.WriteLine("Created campaign negative keyword for keyword plan: " +
+            //    $"{result.ResourceName}.");
             return (result, null);
         }
 
         public static (MutateKeywordPlanAdGroupKeywordResult[] resultArray, GoogleAdsException exception) CreateKeywordPlanAdGroupKeywords(
             GoogleAdsClient client,
-            long customerId,
-            KeywordPlanAdGroupKeyword[] keywordPlanAdGroupKeywords,
+            string customerId,
+            object[] keywordPlanAdGroupKeywords,
             bool debug = false)
         {
             if (debug) Debugger.Launch();
@@ -293,10 +293,17 @@ namespace GoogleAds_Metrics
             KeywordPlanAdGroupKeywordServiceClient serviceClient = client.GetService(
                 Services.V11.KeywordPlanAdGroupKeywordService);
 
-            KeywordPlanAdGroupKeyword[] kpAdGroupKeywords = keywordPlanAdGroupKeywords;
+            KeywordPlanAdGroupKeyword[] kpAdGroupKeywords = (from kwd in keywordPlanAdGroupKeywords select kwd as KeywordPlanAdGroupKeyword).ToArray();
+            /*new KeywordPlanAdGroupKeyword[] { };
+        foreach (var kpagk in keywordPlanAdGroupKeywords)
+        {
+            kpAdGroupKeywords.Prepend<KeywordPlanAdGroupKeyword>((KeywordPlanAdGroupKeyword)kpagk);
+        }
+        // = (KeywordPlanAdGroupKeyword[])keywordPlanAdGroupKeywords;
+            */
 
-            // Create an operation for each plan keyword.
-            List<KeywordPlanAdGroupKeywordOperation> operations =
+                                                            // Create an operation for each plan keyword.
+            List < KeywordPlanAdGroupKeywordOperation > operations =
                 new List<KeywordPlanAdGroupKeywordOperation>();
 
             foreach (KeywordPlanAdGroupKeyword kpAdGroupKeyword in kpAdGroupKeywords)
@@ -309,15 +316,15 @@ namespace GoogleAds_Metrics
 
             // Add the keywords.
             MutateKeywordPlanAdGroupKeywordsResponse response =
-                serviceClient.MutateKeywordPlanAdGroupKeywords(customerId.ToString(), operations);
+                serviceClient.MutateKeywordPlanAdGroupKeywords(customerId, operations);
 
             var results = new List<MutateKeywordPlanAdGroupKeywordResult>();
 
             // Display the results.
             foreach (MutateKeywordPlanAdGroupKeywordResult result in response.Results)
             {
-                Console.WriteLine(
-                    $"Created ad group keyword for keyword plan: {result.ResourceName}.");
+                //Console.WriteLine(
+                //    $"Created ad group keyword for keyword plan: {result.ResourceName}.");
                 results.Add(result);
             }
             return (results.ToArray(), null);
