@@ -16,7 +16,7 @@ using System.Threading.Tasks;
 
 namespace GoogleAds_Metrics
 {
-    public static partial class Historical
+    public static class Auth
     {
         private const string GOOGLE_ADS_API_SCOPE = "https://www.googleapis.com/auth/adwords";
         private static string Me => new StackTrace().GetFrame(1).GetMethod().Name;

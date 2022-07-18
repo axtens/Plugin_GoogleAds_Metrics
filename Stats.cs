@@ -19,53 +19,8 @@ using static Google.Ads.GoogleAds.V11.Enums.KeywordPlanNetworkEnum.Types;
 
 namespace GoogleAds_Metrics
 {
-    public static partial class Historical
+    public static class Stats
     {
-        public static void EnableTrace(string filenamePrefix)
-        {
-            TraceUtilities.Configure(TraceUtilities.DETAILED_REQUEST_LOGS_SOURCE,
-                         Path.Combine(Path.GetTempPath(), $"{filenamePrefix}_{DateTime.UtcNow:yyyy'-'MM'-'dd'-'HH'-'mm'-'ss'-'ffff}.log"),
-                         SourceLevels.All);
-        }
-
-        public static (Customer customer, GoogleAdsException exception) GetAccountInformation(
-            GoogleAdsClient client,
-            string customerId,
-            bool debug = false)
-        {
-            if (debug) Debugger.Launch();
-            // Get the GoogleAdsService.
-            GoogleAdsServiceClient googleAdsService = client.GetService(Services.V11.GoogleAdsService);
-
-            // Construct a query to retrieve the customer.
-            // Add a limit of 1 row to clarify that selecting from the customer resource
-            // will always return only one row, which will be for the customer
-            // ID specified in the request.
-            string query = "SELECT customer.id, customer.descriptive_name, " +
-                "customer.currency_code, customer.time_zone, customer.tracking_url_template, " +
-                "customer.auto_tagging_enabled, customer.status FROM customer LIMIT 1";
-
-            // Executes the query and gets the Customer object from the single row of the response.
-            SearchGoogleAdsRequest request = new SearchGoogleAdsRequest()
-            {
-                CustomerId = customerId,
-                Query = query
-            };
-
-            try
-            {
-                // Issue the search request.
-                Customer customer = googleAdsService.Search(request).First().Customer;
-
-                // Print account information.
-                return (customer, null);
-            }
-            catch (GoogleAdsException e)
-            {
-                return (null, e);
-            }
-        }
-
         public static (string plan, GoogleAdsException exception) CreateKeywordPlan(
             GoogleAdsClient client,
             string customerId,
@@ -91,7 +46,7 @@ namespace GoogleAds_Metrics
             {
                 Create = keywordPlan
             };
-
+            
             // Add the keyword plan.
             MutateKeywordPlansResponse response;
             try
@@ -148,6 +103,8 @@ namespace GoogleAds_Metrics
             // Get the KeywordPlanCampaignService.
             KeywordPlanCampaignServiceClient serviceClient = client.GetService(
                 Services.V11.KeywordPlanCampaignService);
+
+            // campaign.CpcBidMicros = 1_000_000L;
 
             // See https://developers.google.com/google-ads/api/reference/data/geotargets
             // for the list of geo target IDs.
@@ -277,8 +234,6 @@ namespace GoogleAds_Metrics
 
             // Display the result.
             MutateKeywordPlanCampaignKeywordResult result = response.Results[0];
-            //Console.WriteLine("Created campaign negative keyword for keyword plan: " +
-            //    $"{result.ResourceName}.");
             return (result, null);
         }
 
@@ -294,16 +249,9 @@ namespace GoogleAds_Metrics
                 Services.V11.KeywordPlanAdGroupKeywordService);
 
             KeywordPlanAdGroupKeyword[] kpAdGroupKeywords = (from kwd in keywordPlanAdGroupKeywords select kwd as KeywordPlanAdGroupKeyword).ToArray();
-            /*new KeywordPlanAdGroupKeyword[] { };
-        foreach (var kpagk in keywordPlanAdGroupKeywords)
-        {
-            kpAdGroupKeywords.Prepend<KeywordPlanAdGroupKeyword>((KeywordPlanAdGroupKeyword)kpagk);
-        }
-        // = (KeywordPlanAdGroupKeyword[])keywordPlanAdGroupKeywords;
-            */
 
-                                                            // Create an operation for each plan keyword.
-            List < KeywordPlanAdGroupKeywordOperation > operations =
+            // Create an operation for each plan keyword.
+            List<KeywordPlanAdGroupKeywordOperation> operations =
                 new List<KeywordPlanAdGroupKeywordOperation>();
 
             foreach (KeywordPlanAdGroupKeyword kpAdGroupKeyword in kpAdGroupKeywords)
@@ -318,16 +266,25 @@ namespace GoogleAds_Metrics
             MutateKeywordPlanAdGroupKeywordsResponse response =
                 serviceClient.MutateKeywordPlanAdGroupKeywords(customerId, operations);
 
-            var results = new List<MutateKeywordPlanAdGroupKeywordResult>();
+            MutateKeywordPlanAdGroupKeywordResult[] mutateKeywordPlanAdGroupKeywordResults = (from result in response.Results select result).ToArray();
 
-            // Display the results.
-            foreach (MutateKeywordPlanAdGroupKeywordResult result in response.Results)
+            return (mutateKeywordPlanAdGroupKeywordResults, null);
+        }
+
+        public static (GenerateHistoricalMetricsResponse response, GoogleAdsException exception) GenerateHistoricalMetrics(GoogleAdsClient client, string plan)
+        {
+            KeywordPlanServiceClient kpServiceClient = client.GetService(Services.V11.KeywordPlanService);
+
+            try
             {
-                //Console.WriteLine(
-                //    $"Created ad group keyword for keyword plan: {result.ResourceName}.");
-                results.Add(result);
+                var response = kpServiceClient.GenerateHistoricalMetrics(plan);
+                return (response, null);
             }
-            return (results.ToArray(), null);
+            catch (GoogleAdsException e)
+            {
+                return (null, e);
+            }
+
         }
     }
 }
