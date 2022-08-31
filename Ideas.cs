@@ -29,8 +29,9 @@ namespace GoogleAds_Metrics
         public static string PageUrl { get; set; }
         private static KeywordPlanNetwork keywordPlanNetwork { get; set; }
 
-        public static void SetKeywordPlanNetwork(string kpn)
+        public static void SetKeywordPlanNetwork(string kpn, bool debug = false)
         {
+            if (debug) Debugger.Launch();
             keywordPlanNetwork = (KeywordPlanNetwork)Enum.Parse(typeof(KeywordPlanNetwork), kpn);
         }
 

@@ -1,6 +1,7 @@
 ﻿using Google.Ads.GoogleAds;
 using Google.Ads.GoogleAds.Lib;
 using Google.Ads.GoogleAds.Util;
+using Google.Ads.GoogleAds.V11.Enums;
 using Google.Ads.GoogleAds.V11.Errors;
 using Google.Ads.GoogleAds.V11.Resources;
 using Google.Ads.GoogleAds.V11.Services;
@@ -14,6 +15,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using static Google.Ads.GoogleAds.V11.Enums.KeywordMatchTypeEnum.Types;
+using static Google.Ads.GoogleAds.V11.Enums.KeywordPlanAggregateMetricTypeEnum.Types;
 using static Google.Ads.GoogleAds.V11.Enums.KeywordPlanForecastIntervalEnum.Types;
 using static Google.Ads.GoogleAds.V11.Enums.KeywordPlanNetworkEnum.Types;
 
@@ -275,9 +277,15 @@ namespace GoogleAds_Metrics
         {
             KeywordPlanServiceClient kpServiceClient = client.GetService(Services.V11.KeywordPlanService);
 
+            GenerateHistoricalMetricsRequest generateHistoricalMetricsRequest = new GenerateHistoricalMetricsRequest()
+            {
+                KeywordPlan = plan,
+                HistoricalMetricsOptions = new Google.Ads.GoogleAds.V11.Common.HistoricalMetricsOptions() { IncludeAverageCpc = true },
+                AggregateMetrics = new Google.Ads.GoogleAds.V11.Common.KeywordPlanAggregateMetrics()
+            };
             try
             {
-                var response = kpServiceClient.GenerateHistoricalMetrics(plan);
+                var response = kpServiceClient.GenerateHistoricalMetrics(generateHistoricalMetricsRequest);
                 return (response, null);
             }
             catch (GoogleAdsException e)

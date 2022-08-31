@@ -35,7 +35,10 @@ namespace GoogleAds_Metrics
             }
 
             dynamic jsonObj = JsonConvert.DeserializeObject(File.ReadAllText(Path.ChangeExtension(cfgFile, "json")));
-
+            if (null == jsonObj.installed)
+            {
+                return (null, null);
+            } 
             // Load the JSON secrets.
             ClientSecrets secrets = new ClientSecrets()
             {
